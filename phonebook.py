@@ -56,6 +56,56 @@ Radiobutton(root,text='Mobile',variable=pt,value=3).grid(row=10,column=3)
 Radiobutton(root,text='Office',variable=et,value=1).grid(row=12,column=1)
 Radiobutton(root,text='Personal',variable=et,value=2).grid(row=12,column=2)
 pp=[]
+i=[]
+j=[]
+k=[]
+iid=[]
+def savecon():
+	try:
+		global iid
+		cur.execute('select fname from contact where contactid={}'.format(iid))
+		qq=cur.fetchall()
+		if len(qq)>0:
+			cur.execute('delete from contact where contactid={}'.format(iid))
+			iid=-1
+		if pt.get()==1:
+			ptt='Office'
+		elif pt.get()==2:
+			ptt='Home'
+		elif pt.get()==3 or pt.get()==0:
+			ptt='Mobile'
+		if et.get()==1:
+			ett='Office'
+		elif et.get()==2 or et.get()==0:
+			ett='Personal'
+
+		cot=(str(fn.get()),str(mn.get()),str(ln.get()),str(cn.get()),str(ad.get()),str(ci.get()),str(pi.get()),str(we.get()),str(dob.get()))
+		cur.execute('insert into contact(fname,mname,lname,company,address,city,pin,web,dob) values(?,?,?,?,?,?,?,?,?)',cot)
+		cur.execute('select max(contactid) from contact')
+		cid= cur.fetchall()
+		if len(pn.get())!=0:
+			cur.execute('insert into phonenum values(?,?,?)',(int(cid[0][0]),str(ptt),str(pn.get())))
+		if len(em.get())!=0:
+			cur.execute('insert into email values(?,?,?)',(int(cid[0][0]),str(ett),str(em.get())))	
+       
+	except:
+		showerror('oops','something went wrong try again')
+	else:
+		showinfo('yo','contact saved')    
+		con.commit()
+		fn.delete(0,END)
+		mn.delete(0,END)
+		ln.delete(0,END)
+		cn.delete(0,END)
+		ad.delete(0,END)
+		ci.delete(0,END)
+		pi.delete(0,END)
+		we.delete(0,END)
+		dob.delete(0,END)
+		pn.delete(0,END)
+		em.delete(0,END)
+		et.set(0)
+		pt.set(0)
 def search():
 	top=Toplevel()
 	top.title('search')
@@ -63,8 +113,9 @@ def search():
 	Label(top,text='   Enter Name  ').grid(row=1,column=0)
 	spn=Entry(top)
 	spn.grid(row=2,column=0)
-	lb=Listbox(top,width=50,selectmode=SINGLE)
+	lb=Listbox(top,width=100,height=25,selectmode=SINGLE)
 	lb.grid(row=3,column=0)
+	top.geometry('600x550')
 	sc=spn.get()
 	def show(e=0):
 		lb.delete(0,END)
@@ -73,13 +124,43 @@ def search():
 		cur.execute('select contactid,fname,mname,lname from contact where fname like "%{}%" or mname like "%{}%" or lname like "%{}%"'.format(sc,sc,sc))
 		global pp
 		pp=cur.fetchall()
-		i=0
-		while i<len(pp):
-			nn=pp[i][1]+' '+pp[i][2]+' '+pp[i][3]
+		q=0
+		while q<len(pp):
+			nn=pp[q][1]+' '+pp[q][2]+' '+pp[q][3]
 			lb.insert(0,nn)
-			i+=1
+			q+=1
+	
 	def showin(e=0):
-		global pp
+		def edit():
+			global pp,i,j,k
+			top.destroy()
+			top2.destroy()
+			fn.insert(0,i[0][1])
+			mn.insert(0,i[0][2])
+			ln.insert(0,i[0][3])
+			cn.insert(0,i[0][4])
+			ad.insert(0,i[0][5])
+			ci.insert(0,i[0][6])
+			pi.insert(0,i[0][7])
+			we.insert(0,i[0][8])
+			dob.insert(0,i[0][9])
+			if len(j)!=0:
+				pn.insert(0,j[0][2])
+				if j[0][1]=='Office':
+					pt.set(1)
+				elif j[0][1]=='Home':
+					pt.set(2)
+				elif j[0][1]=='Mobile':
+					pt.set(3)
+					
+			if len(k)!=0:
+				em.insert(0,k[0][2])
+				if k[0][1]=='Office':
+					et.set(1)
+				elif k[0][2]=='Personal':
+					et.set(2)
+		
+		global pp,i,j,k,iid
 		per=lb.curselection()
 		ind=per[0]
 		lb.delete(0,END)
@@ -118,58 +199,50 @@ def search():
 		if len(k)!=0:
 			Label(top2,text=k[0][1],font='times 13').grid(row=10,column=1)
 			Label(top2,text=k[0][2],font='times 13').grid(row=11,column=1)
-		
-		
+		def delete():
+			global iid
+			mb=askquestion('Delete contact','Are you sure?',icon='warning')
+			if mb=='yes':
+				cur.execute('delete from contact where contactid={}'.format(iid))
+				iid=-1
+				top2.destroy()
+				con.commit()
+				showinfo('yo','contact deleted')
+		def close():
+			top2.destroy()
+		Button(top2,text='Edit',command=edit).grid(row=12,column=0)
+		Button(top2,text='Delete',command=delete).grid(row=12,column=1)
+		Button(top2,text='Close',command=close).grid(row=12,column=2)
+	def closet():
+		top.destroy()
+	Button(top,text='Close',command=closet).grid(row=4,column=0)
 	lb.bind('<Double-Button-1>',showin)
 	spn.bind('<Button-1>',show)
 	top.bind('<Key>',show)
-	
-	
-def savecon():
-	try:
-		if pt.get()==1:
-			ptt='Office'
-		elif pt.get()==2:
-			ptt='Home'
-		elif pt.get()==3 or pt.get()==0:
-			ptt='Mobile'
-		if et.get()==1:
-			ett='Office'
-		elif et.get()==2 or et.get()==0:
-			ett='Personal'
 
-		cot=(str(fn.get()),str(mn.get()),str(ln.get()),str(cn.get()),str(ad.get()),str(ci.get()),str(pi.get()),str(we.get()),str(dob.get()))
-		cur.execute('insert into contact(fname,mname,lname,company,address,city,pin,web,dob) values(?,?,?,?,?,?,?,?,?)',cot)
-		cur.execute('select max(contactid) from contact')
-		cid= cur.fetchall()
-		if len(pn.get())!=0:
-			cur.execute('insert into phonenum values(?,?,?)',(int(cid[0][0]),str(ptt),str(pn.get())))
-		if len(em.get())!=0:
-			cur.execute('insert into email values(?,?,?)',(int(cid[0][0]),str(ett),str(em.get())))	
-	       
-	except:
-		showerror('oops','something went wrong try again')
-	else:
-		showinfo('yo','contact saved')    
-		con.commit()
-		fn.delete(0,END)
-		mn.delete(0,END)
-		ln.delete(0,END)
-		cn.delete(0,END)
-		ad.delete(0,END)
-		ci.delete(0,END)
-		pi.delete(0,END)
-		we.delete(0,END)
-		dob.delete(0,END)
-		pn.delete(0,END)
-		em.delete(0,END)
-
-		
+def Reset():
+	global iid
+	iid=-1
+	fn.delete(0,END)
+	mn.delete(0,END)
+	ln.delete(0,END)
+	cn.delete(0,END)
+	ad.delete(0,END)
+	ci.delete(0,END)
+	pi.delete(0,END)
+	we.delete(0,END)
+	dob.delete(0,END)
+	pn.delete(0,END)
+	em.delete(0,END)
+	et.set(0)
+	pt.set(0)
+def closer():
+	root.destroy()
 Button(root,text='+').grid(row=11,column=3)
 Button(root,text='+').grid(row=13,column=3)
 Button(root,text='Save',command=savecon).grid(row=14,column=0)
 Button(root,text='Search',command=search).grid(row=14,column=1)
-Button(root,text='Close').grid(row=14,column=2)
-Button(root,text='Edit').grid(row=14,column=3)
-
+Button(root,text='Close',command=closer).grid(row=14,column=2)
+Button(root,text='Edit',command=search).grid(row=14,column=3)
+Button(root,text='Reset',command=Reset).grid(row=14,column=4)
 root.mainloop()

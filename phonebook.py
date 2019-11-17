@@ -120,7 +120,6 @@ def search():
 	def show(e=0):
 		lb.delete(0,END)
 		sc=spn.get()
-		
 		cur.execute('select contactid,fname,mname,lname from contact where fname like "%{}%" or mname like "%{}%" or lname like "%{}%"'.format(sc,sc,sc))
 		global pp
 		pp=cur.fetchall()
